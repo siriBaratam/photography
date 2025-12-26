@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import emailjs from "emailjs-com";
 
 export default function PhotographyPromo() {
   const [formData, setFormData] = useState({
@@ -34,13 +35,14 @@ export default function PhotographyPromo() {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (validate()) {
-      console.log("User Data:", formData);
-      setSubmitted(true);
-    }
-  };
+const handleSubmit = (e: React.FormEvent) => { 
+    e.preventDefault(); if (!validate()) return; // Send email via EmailJS 
+    emailjs.send( "service_ed58zop", "template_4kwbgzw", 
+         { name: formData.name, phone: formData.phone, email: formData.email, }, "lByzLfWZQegWOX7ze"  ) 
+         .then( () => { setSubmitted(true); }, (error) => { console.error("EmailJS Error:", error);
+         } 
+        ); 
+    };
 
   return (
     <div
