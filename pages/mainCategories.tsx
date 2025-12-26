@@ -1,5 +1,6 @@
 "use client"
 
+import PhotographyPromo from "@/components/userform"
 import { useState } from "react"
 
 type Service = {
@@ -164,6 +165,8 @@ export default function MainCategories() {
     }).format(n)
 
   return (
+    <>
+    <PhotographyPromo/>
     <div
       style={{
         minHeight: "100vh",
@@ -421,5 +424,6 @@ export default function MainCategories() {
         )}
       </main>
     </div>
+    </>
   )
 }
