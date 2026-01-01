@@ -1,7 +1,7 @@
 "use client"
 
 import PhotographyPromo from "@/components/userform"
-import { useState } from "react"
+import { useState, useRef } from "react"
 
 type Service = {
   name: string
@@ -153,15 +153,30 @@ const SERVICES: Record<string, Service[]> = {
 }
 
 export default function MainCategories() {
-  const [activeCategories, setActiveCategories] = useState<string[]>([])
+  const [activeCategory, setActiveCategory] = useState<string | null>(null)
   const [selectedServices, setSelectedServices] = useState<Service[]>([])
+  const scrollContainerRef = useRef<HTMLDivElement>(null)
 
-  const toggleCategory = (category: string) => {
-    setActiveCategories((prev) =>
-      prev.includes(category)
-        ? prev.filter((c) => c !== category)
-        : [...prev, category]
-    )
+  const handleCategoryClick = (categoryName: string, index: number) => {
+    // 1. Set Active Category
+    setActiveCategory(categoryName === activeCategory ? null : categoryName)
+    
+    // 2. Scroll to Center Logic
+    if (scrollContainerRef.current) {
+      const container = scrollContainerRef.current
+      const card = container.children[index] as HTMLElement
+      
+      // Calculate position to center the card
+      const scrollLeft =
+        card.offsetLeft -
+        container.clientWidth / 2 +
+        card.clientWidth / 2
+
+      container.scrollTo({
+        left: scrollLeft,
+        behavior: "smooth",
+      })
+    }
   }
 
   const toggleService = (service: Service) => {
@@ -210,209 +225,192 @@ export default function MainCategories() {
           minHeight: "100vh",
           background: "#fafafa",
           fontFamily: "system-ui, -apple-system, BlinkMacSystemFont",
+          overflowX: "hidden",
         }}
       >
-        <main style={{ maxWidth: 1280, margin: "0 auto", padding: "80px 24px" }}>
-          {activeCategories.length === 0 && (
-            <>
-              {/* HERO */}
-              <section style={{ marginBottom: 80 }}>
-                <h1
-                  style={{
-                    fontSize: 52,
-                    fontWeight: 700,
-                    lineHeight: 1.1,
-                    maxWidth: 720,
-                    marginBottom: 20,
-                  }}
-                >
-                  Photography that feels real.
-                  <br />
-                  Memories that last forever.
-                </h1>
-                <p
-                  style={{
-                    fontSize: 18,
-                    color: "#666",
-                    maxWidth: 520,
-                  }}
-                >
-                  Explore our photography and videography services tailored
-                  for weddings, celebrations, and special events.
-                </p>
-              </section>
+        <main style={{ maxWidth: "100%", margin: "0 auto", padding: "80px 0" }}>
+          
+          {/* HERO */}
+          <section style={{ padding: "0 24px", marginBottom: 40, textAlign: "center" }}>
+            <h1
+              style={{
+                fontSize: 52,
+                fontWeight: 700,
+                lineHeight: 1.1,
+                marginBottom: 20,
+              }}
+            >
+              Photography that feels real.
+            </h1>
+            <p style={{ fontSize: 18, color: "#666", maxWidth: 600, margin: "0 auto" }}>
+              Select a category below to view packages.
+            </p>
+          </section>
 
-              {/* EVENT GRID */}
-              <section
-                style={{
-                  display: "grid",
-                  gridTemplateColumns:
-                    "repeat(auto-fit, minmax(280px, 1fr))",
-                  gap: 32,
-                }}
-              >
-                {EVENTS.map((e) => (
+          {/* HORIZONTAL SCROLLING CARDS */}
+          <section
+            ref={scrollContainerRef}
+            style={{
+              display: "flex",
+              gap: 40,
+              overflowX: "auto",
+              // PADDING TRICK: 
+              // We use 50vw - (CardWidth / 2) to ensure the first and last items 
+              // can be scrolled exactly to the center of the screen.
+              padding: "60px calc(50vw - 160px)", 
+              scrollSnapType: "x mandatory",
+              scrollbarWidth: "none",
+              alignItems: "center",
+            }}
+          >
+            {EVENTS.map((e, index) => {
+              const isActive = activeCategory === e.name
+              return (
+                <div
+                  key={e.name}
+                  onClick={() => handleCategoryClick(e.name, index)}
+                  style={{
+                    flex: "0 0 320px", // Fixed width
+                    height: 400,
+                    background: "#fff",
+                    borderRadius: 24,
+                    overflow: "hidden",
+                    cursor: "pointer",
+                    position: "relative",
+                    scrollSnapAlign: "center",
+                    // Improved Shadows
+                    boxShadow: isActive
+                      ? "0 25px 50px -12px rgba(124, 58, 237, 0.25)" // Purple glow
+                      : "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)",
+                    // Animation
+                    transform: isActive ? "scale(1.15)" : "scale(1)",
+                    zIndex: isActive ? 10 : 1,
+                    transition: "all 0.5s cubic-bezier(0.25, 0.8, 0.25, 1)",
+                    border: isActive ? "2px solid #7c3aed" : "2px solid transparent",
+                  }}
+                >
                   <div
-                    key={e.name}
-                    onClick={() => toggleCategory(e.name)}
                     style={{
-                      background: "#fff",
-                      borderRadius: 20,
-                      overflow: "hidden",
-                      cursor: "pointer",
-                      boxShadow: "0 10px 30px rgba(0,0,0,0.08)",
-                      transition: "transform 0.3s ease",
+                      height: "100%",
+                      width: "100%",
+                      background: `url(${e.image}) center/cover`,
+                      position: "absolute",
+                      inset: 0,
+                      transition: "transform 0.5s ease",
+                      transform: isActive ? "scale(1.05)" : "scale(1)",
                     }}
-                    onMouseEnter={(el) => {
-                      el.currentTarget.style.transform = "translateY(-6px)"
-                    }}
-                    onMouseLeave={(el) => {
-                      el.currentTarget.style.transform = "translateY(0)"
+                  />
+                  <div
+                    style={{
+                      position: "absolute",
+                      bottom: 0,
+                      left: 0,
+                      right: 0,
+                      padding: 24,
+                      background: "linear-gradient(to top, rgba(0,0,0,0.8), transparent)",
+                      color: "#fff",
                     }}
                   >
-                    <div
-                      style={{
-                        height: 220,
-                        background: `url(${e.image}) center/cover`,
-                      }}
-                    />
-                    <div style={{ padding: 24 }}>
-                      <h3 style={{ fontSize: 22, marginBottom: 8 }}>
-                        {e.name}
-                      </h3>
-                      <p style={{ fontSize: 14, color: "#666" }}>
-                        {e.description}
-                      </p>
-                    </div>
+                    <h3 style={{ fontSize: 24, marginBottom: 8, fontWeight: 700 }}>
+                      {e.name}
+                    </h3>
+                    <p style={{ fontSize: 14, opacity: 0.9 }}>
+                      {e.description}
+                    </p>
                   </div>
-                ))}
-              </section>
-            </>
-          )}
+                </div>
+              )
+            })}
+          </section>
 
-          {activeCategories.length > 0 && (
+          {/* SERVICES SECTION */}
+          {activeCategory && (
             <div
               style={{
                 display: "grid",
                 gridTemplateColumns: "1fr 360px",
                 gap: 48,
                 alignItems: "start",
+                padding: "40px 24px",
+                maxWidth: 1200,
+                margin: "0 auto",
+                animation: "fadeIn 0.6s ease-out"
               }}
             >
-              {/* services */}
+              {/* Service List */}
               <div>
-                <button
-                  onClick={() => {
-                    setActiveCategories([])
-                  }}
+                <h2 style={{ fontSize: 34, marginBottom: 8 }}>
+                  {activeCategory} Packages
+                </h2>
+                <p style={{ color: "#666", marginBottom: 32 }}>
+                  Customize your {activeCategory} experience
+                </p>
+
+                <div
                   style={{
-                    marginBottom: 24,
-                    background: "none",
-                    border: "none",
-                    cursor: "pointer",
-                    fontSize: 14,
-                    color: "#555",
+                    display: "grid",
+                    gridTemplateColumns:
+                      "repeat(auto-fill, minmax(240px, 1fr))",
+                    gap: 24,
                   }}
                 >
-                  ← Back to events
-                </button>
-
-                {/* Active category tabs */}
-                <div style={{ marginBottom: 24, display: "flex", gap: 12, flexWrap: "wrap" }}>
-                  {EVENTS.map((e) => (
-                    <button
-                      key={e.name}
-                      onClick={() => toggleCategory(e.name)}
-                      style={{
-                        padding: "10px 20px",
-                        background: activeCategories.includes(e.name) ? "#7c3aed" : "#fff",
-                        color: activeCategories.includes(e.name) ? "#fff" : "#333",
-                        border: "1px solid #e5e5e5",
-                        borderRadius: 12,
-                        cursor: "pointer",
-                        fontWeight: 500,
-                        transition: "0.2s",
-                      }}
-                    >
-                      {e.name}
-                    </button>
-                  ))}
-                </div>
-
-                {activeCategories.map((category) => (
-                  <div key={category} style={{ marginBottom: 48 }}>
-                    <h2 style={{ fontSize: 34, marginBottom: 8 }}>
-                      {category}
-                    </h2>
-                    <p style={{ color: "#666", marginBottom: 32 }}>
-                      Select services to build your custom quote
-                    </p>
-
-                    <div
-                      style={{
-                        display: "grid",
-                        gridTemplateColumns:
-                          "repeat(auto-fill, minmax(240px, 1fr))",
-                        gap: 24,
-                      }}
-                    >
-                      {SERVICES[category].map((s) => {
-                        const active = isServiceSelected(s)
-                        return (
+                  {SERVICES[activeCategory].map((s) => {
+                    const active = isServiceSelected(s)
+                    return (
+                      <div
+                        key={s.name}
+                        onClick={() => toggleService(s)}
+                        style={{
+                          background: "#fff",
+                          borderRadius: 18,
+                          overflow: "hidden",
+                          border: active
+                            ? "2px solid #7c3aed"
+                            : "1px solid #e5e5e5",
+                          boxShadow: active
+                            ? "0 10px 25px -5px rgba(124,58,237,0.3)"
+                            : "0 4px 6px -1px rgba(0,0,0,0.05)",
+                          cursor: "pointer",
+                          transition: "all 0.3s ease",
+                          transform: active ? "translateY(-4px)" : "none",
+                        }}
+                      >
+                        <div
+                          style={{
+                            height: 140,
+                            background: `url(${s.image}) center/cover`,
+                          }}
+                        />
+                        <div style={{ padding: 18 }}>
+                          <strong style={{ fontSize: 15 }}>
+                            {s.name}
+                          </strong>
                           <div
-                            key={s.name}
-                            onClick={() => toggleService(s)}
                             style={{
-                              background: "#fff",
-                              borderRadius: 18,
-                              overflow: "hidden",
-                              border: active
-                                ? "2px solid #7c3aed"
-                                : "1px solid #e5e5e5",
-                              boxShadow: active
-                                ? "0 8px 20px rgba(124,58,237,0.25)"
-                                : "0 4px 12px rgba(0,0,0,0.06)",
-                              cursor: "pointer",
-                              transition: "0.25s",
+                              marginTop: 6,
+                              fontWeight: 600,
+                              color: "#7c3aed",
                             }}
                           >
-                            <div
-                              style={{
-                                height: 140,
-                                background: `url(${s.image}) center/cover`,
-                              }}
-                            />
-                            <div style={{ padding: 18 }}>
-                              <strong style={{ fontSize: 15 }}>
-                                {s.name}
-                              </strong>
-                              <div
-                                style={{
-                                  marginTop: 6,
-                                  fontWeight: 600,
-                                  color: "#7c3aed",
-                                }}
-                              >
-                                {price(s.price)}
-                              </div>
-                            </div>
+                            {price(s.price)}
                           </div>
-                        )
-                      })}
-                    </div>
-                  </div>
-                ))}
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
               </div>
 
-              {/* bill */}
+              {/* Quote Summary Bill */}
               <div
                 style={{
                   background: "#fff",
                   borderRadius: 22,
                   padding: 28,
-                  boxShadow: "0 20px 50px rgba(0,0,0,0.12)",
+                  boxShadow: "0 20px 40px -4px rgba(0,0,0,0.1)",
                   position: "sticky",
-                  top: 120,
+                  top: 40,
+                  transition: "all 0.3s ease"
                 }}
               >
                 <h3 style={{ fontSize: 20, marginBottom: 16 }}>
@@ -469,7 +467,7 @@ export default function MainCategories() {
                   </ul>
                 )}
 
-                <hr style={{ margin: "20px 0" }} />
+                <hr style={{ margin: "20px 0", borderTop: "1px solid #eee" }} />
 
                 <div
                   style={{
@@ -491,9 +489,9 @@ export default function MainCategories() {
                     padding: "14px",
                     background:
                       selectedServices.length === 0
-                        ? "#ddd"
+                        ? "#e5e5e5"
                         : "#7c3aed",
-                    color: "#fff",
+                    color: selectedServices.length === 0 ? "#999" : "#fff",
                     border: "none",
                     borderRadius: 12,
                     fontWeight: 600,
@@ -501,6 +499,7 @@ export default function MainCategories() {
                       selectedServices.length === 0
                         ? "not-allowed"
                         : "pointer",
+                    transition: "background 0.3s",
                   }}
                 >
                   Send Quote Request
@@ -509,6 +508,13 @@ export default function MainCategories() {
             </div>
           )}
         </main>
+        
+        <style jsx global>{`
+          @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+          }
+        `}</style>
       </div>
     </>
   )
